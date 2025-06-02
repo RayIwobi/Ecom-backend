@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 const path = require('path')
 const multer = require('multer')
-const PORT = process.env.PORT || 4000
+const PORT = process.env.PORT || 1000
 const app = express()
 const axios = require('axios');
 
