@@ -43,7 +43,13 @@ router.post('/login', async(req, res) => {
     }
 
     const token = jwt.sign({id: user._id}, process.env.KEY, {expiresIn:'3h'})
-    res.cookie('token', token, {httpOnly:true, maxAge:3600000})
+    res.cookie('token', token, {
+    httpOnly: true,
+    secure: true,       // this is important when using HTTPS (e.g., Render)
+    sameSite: 'None',   // necessary when frontend and backend are on different domains
+    maxAge: 3600000
+    });
+
     res.json({status:true, message:"login succesful"})
 })
 
