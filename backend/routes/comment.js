@@ -26,6 +26,11 @@ const verifyUser = async (req, res, next) => {
     }
 }
 
+router.get('/verify', verifyUser, (req, res) => {
+    return res.json({status: true, message: "authorized user"})
+
+})
+
 //COMMENTS BACKENND-----------------------------------------------
 router.get('/read', async(req, res) => {
   const userReview = await commentsModel.find().sort({ createdAt: -1 }); // .sort({ createdAt: -1 }); makes it appear in descending order
