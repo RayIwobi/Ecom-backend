@@ -14,23 +14,23 @@ app.use('/webhook', stripeWebhook);
 
 
 app.use(cors({
-    origin: 'https://nedifoods.co.uk'
+    origin: 'https://nedifoods.co.uk',
     //origin:['http://localhost:3000','https://nedifoods-api.vercel.app', 'https://nedifoods.co.uk'],
     credentials:true,
 }))
 
-//app.use((req, res, next) => {
- // res.header('Access-Control-Allow-Origin', 'https://nedifoods.co.uk');
- // res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
- // res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
- // res.header('Access-Control-Allow-Credentials', 'true');
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://nedifoods.co.uk');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
 
- // if (req.method === 'OPTIONS') {
- //   return res.sendStatus(200); // CORS preflight success
- // }
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200); // CORS preflight success
+  }
 
-  //next();
-//});
+  next();
+});
 
 
 
@@ -123,6 +123,20 @@ app.post('/sendinfo', uploadfile.single('file'), async(req, res) => {
 app.get('/getitems', async(req, res) => {
   try{
     const items = await Products.find().sort({ createdAt: -1 })
+    res.status(200).json(items)
+  
+  } 
+  catch (error){
+    console.error(error)
+    res.status(500).json({message:'it could not display items'})
+  } 
+})
+
+
+app.get('/getitems/:id', async(req, res) => {
+  try{
+    const {id} = req.params.id
+    const items = await Products.findById(req.params.id)
     res.status(200).json(items)
   
   } 
@@ -338,25 +352,31 @@ app.get('/products', async (req, res) => {
 
 //STRIPE PAYMENT CODE
 app.post('/create-checkout-session', async (req, res) => {
-  const { cart, userId, userEmail } = req.body;
-
-  console.log("🛒 Cart received:", cart);
-  console.log("👤 User ID received:", userId);
+  const { cart, userId, userEmail, username, userphone, useraddress } = req.body;
 
   if (!cart || !Array.isArray(cart)) {
     return res.status(400).json({ error: 'Invalid cart data' });
   }
 
   try {
-     //const saveCart = await PendingCart.create({ userId, cart });
-      
-    const line_items = cart.map((item) => ({
+    // Save the cart and user info in DB
+    const savedCart = await PendingCart.create({
+      userId,
+      email: userEmail,
+      username,
+      userphone,
+      useraddress,
+      cart,
+    });
+
+    // Convert cart to Stripe format
+    const line_items = cart.map(item => ({
       price_data: {
         currency: 'gbp',
         product_data: {
           name: item.productname,
         },
-        unit_amount: Math.round(item.productprice * 100), // Stripe expects cents
+        unit_amount: Math.round(item.productprice * 100),
       },
       quantity: item.productquantity,
     }));
@@ -368,31 +388,15 @@ app.post('/create-checkout-session', async (req, res) => {
       line_items,
       success_url: 'https://nedifoods.co.uk/success',
       cancel_url: 'https://nedifoods.co.uk/cancel',
-
-      phone_number_collection: {
-      enabled: true,           //Enabled phone collection in Stripe Checkout
-      },
-      
-      //This metadata works but because stripe has a limit of 5oo characters, it will return an error for products more than 500 characters
+      phone_number_collection: { enabled: true },
       metadata: {
-      cart: JSON.stringify(cart.map(item => ({
-        _id: item._id,
-        productname: item.productname,
-        productprice: item.productprice,
-        productquantity: item.productquantity,
-      }))),
-      userId: userId ? userId.toString() : 'unknown',
-      }
-
-      // metadata:{
-      //   pendingCartId: saveCart._id.toString(),
-      //   userId: userId
-      // }
+        cartId: savedCart._id.toString(),
+        userId: userId?.toString() || 'unknown',
+      },
     });
-    console.log("🛒 Cart received:", cart);
-    console.log("👤 User ID received:", userId);
 
     res.json({ url: session.url });
+
   } catch (error) {
     console.error('Error creating checkout session:', error.message);
     res.status(500).json({ error: 'Failed to create Stripe checkout session' });
