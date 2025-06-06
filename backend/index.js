@@ -352,7 +352,7 @@ app.post('/create-checkout-session', async (req, res) => {
       
     const line_items = cart.map((item) => ({
       price_data: {
-        currency: 'usd',
+        currency: 'gbp',
         product_data: {
           name: item.productname,
         },
