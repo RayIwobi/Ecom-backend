@@ -14,7 +14,7 @@ app.use('/webhook', stripeWebhook);
 
 
 app.use(cors({
-    origin: ['https://nedifoods.co.uk', 'http://localhost:3000']
+    origin: 'https://nedifoods.co.uk'
     //origin:['http://localhost:3000','https://nedifoods-api.vercel.app', 'https://nedifoods.co.uk'],
     credentials:true,
 }))
