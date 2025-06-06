@@ -1,20 +1,19 @@
 const mongoose = require('mongoose');
 
-const PendingCartSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  cart: {
-    type: Array,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    expires: 3600 // Optional: auto-delete after 1 hour
-  },
-});
+const pendingCartSchema = new mongoose.Schema({
+  userId: { type: String },
+  email: { type: String },
+  username: { type: String },
+  userphone: { type: String },
+  useraddress: { type: String },
+  cart: [
+    {
+      _id: String,
+      productname: String,
+      productprice: Number,
+      productquantity: Number,
+    },
+  ],
+}, { timestamps: true });
 
-module.exports = mongoose.model('PendingCart', PendingCartSchema);
+module.exports = mongoose.model('PendingCart', pendingCartSchema);
