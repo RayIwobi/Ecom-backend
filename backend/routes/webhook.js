@@ -100,67 +100,78 @@ await transporter.sendMail(mailOptions).then(info => {
 // });
 
 
-router.post('/', express.raw({ type: 'application/json' }), async (req, res) => {
-  console.log("🔥 Webhook route HIT!");
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
+    console.error('⚠️ Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    console.log("Stripe session customer details:", session.customer_details); //remove this line after testing
-
 
     try {
-      const metadata = session.metadata;
+      const cartId = session.metadata?.cartId;
+      if (!cartId) throw new Error('Missing cartId in metadata');
 
-      if (!metadata || !metadata.cart) {
-        console.error("❌ Metadata.cart is missing");
-        return res.status(400).send("Missing cart in metadata");
-      }
+      const pendingCart = await PendingCart.findById(cartId);
+      if (!pendingCart) throw new Error('Cart not found in DB');
 
-      let cart;
-      try {
-        cart = JSON.parse(metadata.cart);
-      } catch (err) {
-        console.error("❌ Failed to parse metadata.cart:", err.message);
-        return res.status(400).send("Invalid JSON in metadata.cart");
-      }
-      const phone = session.customer_details?.phone || "Not provided";
-      //const phone = session.phone_number_collection || "Not provided";
-
-
-      // Create the order using the compressed cart
-      const order = new Order({
-        phone,
-        userEmail: session.customer_email,
-        paymentId: session.payment_intent,
-        totalAmount: session.amount_total / 100,
-        //phone: session.customer_details.phone,
-        items: cart.map(item => ({
-          productId: item._id,
-          productname: item.productname,
-          productprice: item.productprice,
-          productquantity: item.productquantity,
-        }))
+      // ✅ Send order email to admin
+      await transporter.sendMail({
+        from: '"NediFoods Orders" <enquiries@nedifoods.co.uk>',
+        to: 'orders@nedifoods.co.uk',
+        subject: `🛒 New Order from ${pendingCart.username}`,
+        html: `
+          <h2>New Order Received</h2>
+          <p><strong>Name:</strong> ${pendingCart.username}</p>
+          <p><strong>Email:</strong> ${pendingCart.email}</p>
+          <p><strong>Phone:</strong> ${pendingCart.userphone}</p>
+          <p><strong>Address:</strong> ${pendingCart.useraddress}</p>
+          <h3>Cart Items:</h3>
+          <ul>
+            ${pendingCart.cart.map(item => `
+              <li>
+                ${item.productquantity} × ${item.productname} (£${item.productprice} each)
+              </li>`).join('')}
+          </ul>
+        `,
       });
 
-      await order.save();
-      await sendOrderToAdmin(order);
+      // ✅ Send thank-you email to customer
+      await transporter.sendMail({
+        from: '"NediFoods" <orders@nedifoods.co.uk>',
+        to: pendingCart.email,
+        subject: '🎉 Thank you for your order!',
+        html: `
+          <h2>Thank you, ${pendingCart.username}!</h2>
+          <p>We’ve received your order and will begin processing it shortly.</p>
+          <p><strong>Delivery Address:</strong> ${pendingCart.useraddress}</p>
+          <h3>Your Order:</h3>
+          <ul>
+            ${pendingCart.cart.map(item => `
+              <li>
+                ${item.productquantity} × ${item.productname} (£${item.productprice} each)
+              </li>`).join('')}
+          </ul>
+          <p>If you have any questions, just reply to this email.</p>
+          <p>– The NediFoods Team</p>
+        `,
+      });
 
-      return res.status(200).send("Order saved and email sent");
+      console.log('✅ Emails sent to admin and customer');
+      res.status(200).send('Webhook processed');
     } catch (error) {
-      console.error("❌ Error in webhook handler:", error);
-      return res.status(500).send("Internal Server Error");
+      console.error('❌ Webhook processing failed:', error.message);
+      res.status(500).send('Webhook failed');
     }
+  } else {
+    res.status(200).send('Event ignored');
   }
-
-  res.status(200).end();
 });
 
 
