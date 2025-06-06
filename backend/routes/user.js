@@ -85,7 +85,7 @@ router.post('/forgotpassword', async(req, res) => {
             from:  '"Nedifoods" <support@nedifoods.co.uk>',  //process.env.EMAIL_USER,
             to: email,
             subject: 'Reset password',
-            text: `click on the link or copy it to your browser: http://nedifoods.co.uk/reset-password/${token}`
+            text: `click on the link or copy it to your browser: https://nedifoods.co.uk/reset-password/${token}`
         }
 
 
