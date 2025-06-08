@@ -47,7 +47,7 @@ router.post('/login', async(req, res) => {
     httpOnly: true,
     secure: true,       // this is important when using HTTPS (e.g., Render)
     sameSite: 'None',   // necessary when frontend and backend are on different domains
-    maxAge: 3600000
+    maxAge: 36000000
     });
 
     res.json({status:true, message:"login succesful"})
@@ -219,10 +219,16 @@ router.put('/update', verifyUser, async(req, res) => {
 
 
 //logout function - delete token
-router.get('/logout', (req, res) => {
-    res.clearCookie('token')
-    return res.json({status:true})
-})
+router.get('/logout', verifyUser, (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'None',
+    path:'/'
+  });
+  return res.json({status: true});
+});
+
 
 module.exports = { UserRouter:router }
 //export {router as UserRouter} 
