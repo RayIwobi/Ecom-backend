@@ -23,7 +23,7 @@ const newArrivalsSchema = new mongoose.Schema({
     },
     productoldprice:{
         type: Number,
-        required:true
+        required:false
     },
     category:{
         type:String,
@@ -32,7 +32,7 @@ const newArrivalsSchema = new mongoose.Schema({
     },
     description:{
         type:String,
-        required:true
+        required:false
     }
 },{timestamps:true})
 
