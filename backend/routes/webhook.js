@@ -87,7 +87,7 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
 
       // ✅ Send thank-you email to customer
       await transporter.sendMail({
-        from: '"NediFoods" <orders@nedifoods.co.uk>',
+        from: '"Nedi foods" <support@nedifoods.co.uk>',
         to: pendingCart.email,
         subject: '🎉 Thank you for your order!',
         html: `
