@@ -8,10 +8,11 @@ const PORT = process.env.PORT || 10000
 const app = express()
 const axios = require('axios');
 
-const {stripeWebhook} = require('./routes/webhook.js');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-app.use('/webhook', stripeWebhook);
+console.log("Stripe key used:", process.env.STRIPE_SECRET_KEY);
 
+const webhookRoute = require('./routes/webhook.js'); // path to your file
+app.use('/webhook', webhookRoute);
 
 app.use(cors({
     origin: 'https://nedifoods.co.uk',
@@ -19,23 +20,24 @@ app.use(cors({
     credentials:true,
 }))
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://nedifoods.co.uk');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
+// app.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', 'https://nedifoods.co.uk');
+//   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+//   res.header('Access-Control-Allow-Credentials', 'true');
 
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200); // CORS preflight success
-  }
+//   if (req.method === 'OPTIONS') {
+//     return res.sendStatus(200); // CORS preflight success
+//   }
 
-  next();
-});
+//   next();
+// });
 
 
 
 const  {UserRouter } = require('./routes/user.js') 
 const  {CommentRouter } = require('./routes/comment.js')  
+
 // Mount webhook before express.json for raw body
 
 
