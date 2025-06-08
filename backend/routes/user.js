@@ -177,7 +177,7 @@ const verifyUser = async (req, res, next) => {
         next()
     }
     catch (error){
-        return res.json(err)
+        return res.json(error)
     }
 }
 
