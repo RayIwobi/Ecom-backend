@@ -6,7 +6,7 @@ const path = require('path')
 const multer = require('multer')
 const PORT = process.env.PORT || 10000
 const app = express()
-const axios = require('axios');
+
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 console.log("Stripe key used:", process.env.STRIPE_SECRET_KEY);
@@ -16,7 +16,7 @@ app.use('/webhook', webhookRoute);
 
 app.use(cors({
     origin: 'https://nedifoods.co.uk',
-    //origin:['http://localhost:3000','https://nedifoods-api.vercel.app', 'https://nedifoods.co.uk'],
+    //origin:['http://localhost:3000','https://nedifoods.co.uk'],
     credentials:true,
 }))
 
@@ -56,11 +56,11 @@ const Category = require('./models/Category.js')
 
 
 
-
+app.use(express.json())
 app.use(cookieParser())
 
 app.use(express.static('public'))
-app.use(express.json())
+
 
 app.use('/auth', UserRouter)
 app.use('/comments', CommentRouter)
@@ -69,6 +69,8 @@ app.use('/orders', require('./routes/orderRoute'));
 
 
 mongoose.connect(process.env.MONGO_URI)
+.then(() => console.log('✅ MongoDB connected'))
+.catch(err => console.error('❌ MongoDB connection failed:', err));
 
 
 cloudinary.config({
@@ -151,7 +153,7 @@ app.get('/getitems/:id', async(req, res) => {
 
 app.get('/product/:id', async(req, res) => {
   try{
-    const {id} = req.params.id
+    const {id} = req.params
     const items = await Products.findById(req.params.id)
     res.status(200).json(items)
   
@@ -218,7 +220,7 @@ app.put('/updateitems/:id', uploadfile.single('file'), async (req, res) => {
 
 app.delete('/deleteitems/:id', async(req, res) => {
   try{
-    const id = req.params.id
+    const id = req.params
     const newdelete = await Products.findByIdAndDelete(id)
 
     if(!newdelete){
@@ -314,44 +316,26 @@ app.get('/categories', async (req, res) => {
   }
 });
 
-app.get('/products', async (req, res) => {
-  const { category, subcategory } = req.query;
+// app.get('/products', async (req, res) => {
+//   const { category, subcategory } = req.query;
 
-  try {
-    let query = {};
-    if (category) query.category = category;
-    if (subcategory) query.subcategory = subcategory;
+//   try {
+//     let query = {};
+//     if (category) query.category = category;
+//     if (subcategory) query.subcategory = subcategory;
 
-    const products = await Product.find(query);
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+//     const products = await Product.find(query);
+//     res.json(products);
+//   } catch (err) {
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
-//this block of code checks for user authentication. call verifyUser whereever you want to use it
-// const verifyUser = async (req, res, next) => {
-//     try{
-//         const token = req.cookies.token;
-//         if(!token){
-//             return res.json({status: false, message: "no token"})
-//         }
-//         const decoded = jwt.verify(token, process.env.KEY);
-//         req.user = decoded;
-//         next()
-//     }
-//     catch (error){
-//         return res.json(error)
-//     }
-// }
-
-// app.get('/verify', verifyUser, (req, res) => {
-//     return res.json({status: true, message: "authorized user"})
-
-// })
 
 //Saving the data before the stripe session
 //const PendingCart = require('./models/PendingCart');
+
+
 
 //STRIPE PAYMENT CODE
 app.post('/create-checkout-session', async (req, res) => {
@@ -411,4 +395,3 @@ app.post('/create-checkout-session', async (req, res) => {
 app.listen(process.env.PORT, () => {
     console.log('SERVER RUNNING ON PORT ' + process.env.PORT)
 })
-
