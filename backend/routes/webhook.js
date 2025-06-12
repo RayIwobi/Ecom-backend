@@ -31,9 +31,10 @@ const sendOrderToAdmin = async (order) => {
   const itemsHtml = order.items.map(item => `
     <li>${item.productname} - Qty: ${item.productquantity} - £${item.productprice}</li>
   `).join('');
-
+  
+  //sending the order to the Admin
   const mailOptions = {
-    from: '"Nedifoods" <support@nedifoods.co.uk>',
+    from: '"Nedi foods" <support@nedifoods.co.uk>',
     to: "orders@nedifoods.co.uk",
     subject: `New Order from ${order.userEmail}`,
     html: `
@@ -42,7 +43,7 @@ const sendOrderToAdmin = async (order) => {
       <p><strong>Phone:</strong> ${order.phone || 'Not provided'}</p>
       <p><strong>Address:</strong> ${order.address || 'Not provided'}</p>
       <p><strong>Payment ID:</strong> ${order.paymentId}</p>
-      <p><strong>Total:</strong> £${order.totalAmount}</p>
+      <p><strong>Total:</strong> £${order.totalAmount}</p> 
       <ul>${itemsHtml}</ul>
     `
   };
@@ -74,6 +75,14 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
       console.log("📦 Pending cart found:", pendingCart);
 
       if (!pendingCart) throw new Error('Cart not found in DB');
+
+      //this block sends the order info to te customer's dashboard
+      await Order.create({
+        userEmail: pendingCart.email,
+        paymentId: session.payment_intent,
+        totalAmount: session.amount_total / 100,
+        items: pendingCart.cart
+      });
 
       // ✅ Use the sendOrderToAdmin function
       await sendOrderToAdmin({
