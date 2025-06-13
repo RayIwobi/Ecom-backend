@@ -94,12 +94,13 @@ const uploadfile = multer({
 //routes
 app.post('/sendinfo', uploadfile.single('file'), async(req, res) => {
   try{
-    const {productname, productweight, productquantity,  productprice, productoldprice,category, description} = req.body
+    const {productname, productweight, weight, productquantity,  productprice, productoldprice,category, description} = req.body
     const image = req.file?.filename || ""
 
     const newentry = await Products.create({
       productname,
       productweight,
+      weight,
       productquantity,
       productprice,
       productoldprice,
@@ -172,6 +173,7 @@ app.put('/updateitems/:id', uploadfile.single('file'), async (req, res) => {
     const {
       productname,
       productweight,
+      weight,
       productquantity,
       productprice,
       productoldprice,
@@ -188,6 +190,7 @@ app.put('/updateitems/:id', uploadfile.single('file'), async (req, res) => {
     const updateData = {
       productname,
       productweight: Number(productweight),
+      weight,
       productquantity: Number(productquantity),
       productprice: Number(productprice),
       productoldprice: Number(productoldprice),
