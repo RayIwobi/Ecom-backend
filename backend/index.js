@@ -220,8 +220,8 @@ app.put('/updateitems/:id', uploadfile.single('file'), async (req, res) => {
 
 app.delete('/deleteitems/:id', async(req, res) => {
   try{
-    const id = req.params
-    const newdelete = await Products.findByIdAndDelete(id)
+    const _id = req.params.id
+    const newdelete = await Products.findByIdAndDelete(_id)
 
     if(!newdelete){
       res.status(500).json({message:'item not found'})
