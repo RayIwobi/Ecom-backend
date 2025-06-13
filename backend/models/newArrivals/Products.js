@@ -13,6 +13,10 @@ const newArrivalsSchema = new mongoose.Schema({
         type: Number,
         required:false
     },
+    weight:{
+        type: String,
+        required:false
+    },
     productquantity:{
         type: Number,
         required:false
