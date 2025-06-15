@@ -359,17 +359,43 @@ app.post('/create-checkout-session', async (req, res) => {
       cart,
     });
 
-    // Convert cart to Stripe format
-    const line_items = cart.map(item => ({
-      price_data: {
-        currency: 'gbp',
-        product_data: {
-          name: item.productname,
+    // Convert cart to Stripe format //workng but without delivery fee
+   // const line_items = cart.map(item => ({
+     // price_data: {
+       // currency: 'gbp',
+       // product_data: {
+         // name: item.productname,
+      //  },
+      //  unit_amount: Math.round(item.productprice * 100),
+     // },
+     // quantity: item.productquantity,
+   // }));
+
+              const line_items = [
+      ...cart.map(item => ({
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: item.productname,
+          },
+          unit_amount: Math.round(item.productprice * 100), // Stripe expects price in pence
         },
-        unit_amount: Math.round(item.productprice * 100),
+        quantity: item.productquantity,
+      })),
+
+      // Add delivery fee
+      {
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: 'Delivery Fee',
+          },
+          unit_amount: 400, // £5.00 in pence
+        },
+        quantity: 1,
       },
-      quantity: item.productquantity,
-    }));
+    ];
+
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
