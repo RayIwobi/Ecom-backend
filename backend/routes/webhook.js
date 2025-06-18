@@ -41,6 +41,7 @@ const sendOrderToAdmin = async (order) => {
       <h2>New Order Received</h2>
       <p><strong>User:</strong> ${order.userEmail}</p>
       <p><strong>Phone:</strong> ${order.phone || 'Not provided'}</p>
+      <p><strong>Delivery Method:</strong> ${order.deliveryMethod === 'pickup' ? 'Pick up locally' : 'Home delivery'}</p>
       <p><strong>Address:</strong> ${order.address || 'Not provided'}</p>
       <p><strong>Payment ID:</strong> ${order.paymentId}</p>
       <p><strong>Total:</strong> £${order.totalAmount}</p> 
@@ -81,9 +82,10 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
         userEmail: pendingCart.email,
         paymentId: session.payment_intent,
         totalAmount: session.amount_total / 100,
-        items: pendingCart.cart
+        items: pendingCart.cart,
+        deliveryMethod: pendingCart.deliveryMethod
       });
-
+        console.log("order.create area:",pendingCart.deliveryMethod)
       // ✅ Use the sendOrderToAdmin function
       await sendOrderToAdmin({
         userEmail: pendingCart.email,
@@ -91,8 +93,10 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
         address: pendingCart.useraddress,
         paymentId: session.payment_intent,
         totalAmount: session.amount_total / 100,
-        items: pendingCart.cart
+        items: pendingCart.cart,
+        deliveryMethod: pendingCart.deliveryMethod
       });
+      console.log("sendOrderToAdmin area:", pendingCart.deliveryMethod)
 
       // ✅ Send thank-you email to customer
       await transporter.sendMail({
@@ -103,6 +107,7 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
           <h2>Thank you, ${pendingCart.username}!</h2>
           <p>We’ve received your order and will begin processing it shortly.</p>
           <p><strong>Delivery Address:</strong> ${pendingCart.useraddress}</p>
+          <p><strong>Delivery Method:</strong> ${pendingCart.deliveryMethod === 'pickup' ? 'Pick up locally' : 'Home delivery'}</p>
           <h3>Your Order:</h3>
           <ul>
             ${pendingCart.cart.map(item => `
