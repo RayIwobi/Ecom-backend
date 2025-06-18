@@ -14,6 +14,7 @@ const pendingCartSchema = new mongoose.Schema({
       productquantity: Number,
     },
   ],
+  deliveryMethod:{type:String}
 }, { timestamps: true });
 
 module.exports = mongoose.model('PendingCart', pendingCartSchema);
