@@ -12,6 +12,7 @@ const orderSchema = new mongoose.Schema({
       productquantity: Number
     }
   ],
+  deliveryMethod:{type:String, required:true},
   createdAt: { type: Date, default: Date.now }
 });
 
