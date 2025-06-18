@@ -16,7 +16,7 @@ app.use('/webhook', webhookRoute);
 
 app.use(cors({
     origin: 'https://nedifoods.co.uk',
-    //origin:['http://localhost:3000','https://nedifoods.co.uk'],
+    //origin:['http://localhost:3000'],
     credentials:true,
 }))
 
@@ -342,7 +342,7 @@ app.get('/categories', async (req, res) => {
 
 //STRIPE PAYMENT CODE
 app.post('/create-checkout-session', async (req, res) => {
-  const { cart, userId, userEmail, username, userphone, useraddress } = req.body;
+  const { cart, userId, userEmail, username, userphone, useraddress, deliveryMethod  } = req.body;
 
   if (!cart || !Array.isArray(cart)) {
     return res.status(400).json({ error: 'Invalid cart data' });
@@ -357,21 +357,10 @@ app.post('/create-checkout-session', async (req, res) => {
       userphone,
       useraddress,
       cart,
+      deliveryMethod
     });
 
-    // Convert cart to Stripe format //workng but without delivery fee
-   // const line_items = cart.map(item => ({
-     // price_data: {
-       // currency: 'gbp',
-       // product_data: {
-         // name: item.productname,
-      //  },
-      //  unit_amount: Math.round(item.productprice * 100),
-     // },
-     // quantity: item.productquantity,
-   // }));
-
-              const line_items = [
+        const line_items = [
       ...cart.map(item => ({
         price_data: {
           currency: 'gbp',
@@ -382,21 +371,23 @@ app.post('/create-checkout-session', async (req, res) => {
         },
         quantity: item.productquantity,
       })),
-
-      // Add delivery fee
-      {
-        price_data: {
-          currency: 'gbp',
-          product_data: {
-            name: 'Delivery Fee',
-          },
-          unit_amount: 400, // £5.00 in pence
-        },
-        quantity: 1,
-      },
     ];
 
-
+     // Conditionally add delivery fee
+      if (deliveryMethod === 'home') {
+        line_items.push({
+          price_data: {
+            currency: 'gbp',
+            product_data: {
+              name: 'Delivery Fee',
+            },
+            unit_amount: 400, //in pence
+          },
+          quantity: 1,
+        });
+      }
+    
+    
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -407,7 +398,7 @@ app.post('/create-checkout-session', async (req, res) => {
       phone_number_collection: { enabled: true },
       metadata: {
         cartId: savedCart._id.toString(),
-        userId: userId?.toString() || 'unknown',
+        userId: userId?.toString() || 'unknown', 
       },
     });
 
